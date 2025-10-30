@@ -160,6 +160,7 @@ footer{max-width:980px; margin:22px auto; color:var(--muted); font-size:13px; te
 
 <footer>Feito com ❤️ — Sistema de Manutenção</footer>
 
+<!-- SCRIPT FUNCIONAL -->
 <script>
 function showMessage(msg,type="success"){
   const t=document.createElement("div");
@@ -169,140 +170,131 @@ function showMessage(msg,type="success"){
   setTimeout(()=>t.remove(),3000);
 }
 
-// Alternar menus
-const paginaCadastro=document.getElementById("paginaCadastro");
-const paginaConsulta=document.getElementById("paginaConsulta");
-document.getElementById("menuCadastro").onclick=()=>{paginaCadastro.style.display="block";paginaConsulta.style.display="none";}
-document.getElementById("menuConsulta").onclick=()=>{paginaCadastro.style.display="none";paginaConsulta.style.display="block";carregarDados();}
-
-// Função para gerar ID automático
+// Gerar ID automático
 async function gerarIdMaquina(){
   const hoje=new Date();
   const dataStr=hoje.toISOString().slice(0,10).replace(/-/g,"");
-  const snap=await db.collection("manutencoes")
-                     .where("dataId","==",dataStr)
-                     .get();
+  const snap=await db.collection("manutencoes").where("dataId","==",dataStr).get();
   const contador=(snap.size+1).toString().padStart(3,"0");
   return { id:`PC-${dataStr}-${contador}`, dataId:dataStr };
 }
 
-// Ao abrir página de cadastro, gerar ID automático
 window.addEventListener("DOMContentLoaded", async ()=>{
+  const paginaCadastro=document.getElementById("paginaCadastro");
+  const paginaConsulta=document.getElementById("paginaConsulta");
+  const idInput=document.getElementById("idMaquina");
+  const form=document.getElementById("formCadastro");
+
+  // Gera primeiro ID
   const novo=await gerarIdMaquina();
-  document.getElementById("idMaquina").value=novo.id;
-});
+  idInput.value=novo.id;
 
-// Cadastro
-document.getElementById("formCadastro").addEventListener("submit",async e=>{
-  e.preventDefault();
-  const { id:dataId, idMaquina }={ idMaquina:idMaquina.value, dataId: idMaquina.value.split("-")[1] };
-  const data={
-    idMaquina:idMaquina.value.trim(),
-    dataEntrada:dataEntrada.value,
-    setor:setor.value.trim(),
-    problema:problema.value.trim(),
-    solucao:solucao.value.trim(),
-    status:status.value,
-    dataSaida:dataSaida.value,
-    tecnico:tecnico.value.trim(),
-    dataCadastro:new Date(),
-    dataId: idMaquina.value.split("-")[1]
-  };
-  try{
-    await db.collection("manutencoes").add(data);
-    showMessage("✅ Manutenção cadastrada com sucesso!");
-    const novo=await gerarIdMaquina();
-    document.getElementById("idMaquina").value=novo.id;
-    e.target.reset();
-  }catch(err){
-    console.error(err);
-    showMessage("Erro ao salvar!","error");
-  }
-});
+  // Alternar menus
+  document.getElementById("menuCadastro").onclick=async()=>{paginaCadastro.style.display="block";paginaConsulta.style.display="none";const n=await gerarIdMaquina();idInput.value=n.id;}
+  document.getElementById("menuConsulta").onclick=()=>{paginaCadastro.style.display="none";paginaConsulta.style.display="block";carregarDados();}
 
-// Consulta / edição / exclusão
-let manutencoes=[];
-async function carregarDados(){
-  const tbody=document.querySelector("#tabela tbody");
-  tbody.innerHTML="<tr><td colspan='9'>Carregando...</td></tr>";
-  const snap=await db.collection("manutencoes").orderBy("dataCadastro","desc").get();
-  manutencoes=snap.docs.map(d=>({id:d.id,...d.data()}));
-  renderTabela(manutencoes);
-}
-
-function renderTabela(lista){
-  const tbody=document.querySelector("#tabela tbody");
-  if(lista.length===0){tbody.innerHTML="<tr><td colspan='9'>Nenhum registro encontrado.</td></tr>";return;}
-  tbody.innerHTML="";
-  lista.forEach(item=>{
-    const tr=document.createElement("tr");
-    tr.innerHTML=`
-      <td>${item.idMaquina||""}</td>
-      <td contenteditable data-field="dataEntrada">${item.dataEntrada||""}</td>
-      <td contenteditable data-field="setor">${item.setor||""}</td>
-      <td contenteditable data-field="problema">${item.problema||""}</td>
-      <td contenteditable data-field="solucao">${item.solucao||""}</td>
-      <td>
-        <select data-field="status">
-          <option ${item.status==="Em manutenção"?"selected":""}>Em manutenção</option>
-          <option ${item.status==="Concluído"?"selected":""}>Concluído</option>
-        </select>
-      </td>
-      <td contenteditable data-field="dataSaida">${item.dataSaida||""}</td>
-      <td contenteditable data-field="tecnico">${item.tecnico||""}</td>
-      <td><button class="small excluirBtn" data-id="${item.id}">Excluir</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
-  document.querySelectorAll(".excluirBtn").forEach(btn=>{
-    btn.onclick=async()=>{
-      if(confirm("Excluir este registro?")){
-        await db.collection("manutencoes").doc(btn.dataset.id).delete();
-        showMessage("Registro excluído!");
-        carregarDados();
-      }
+  // Salvar manutenção
+  form.addEventListener("submit",async e=>{
+    e.preventDefault();
+    const data={
+      idMaquina:idInput.value.trim(),
+      dataEntrada:document.getElementById("dataEntrada").value,
+      setor:document.getElementById("setor").value.trim(),
+      problema:document.getElementById("problema").value.trim(),
+      solucao:document.getElementById("solucao").value.trim(),
+      status:document.getElementById("status").value,
+      dataSaida:document.getElementById("dataSaida").value,
+      tecnico:document.getElementById("tecnico").value.trim(),
+      dataCadastro:new Date(),
+      dataId:idInput.value.split("-")[1]
     };
+    try{
+      await db.collection("manutencoes").add(data);
+      showMessage("✅ Manutenção cadastrada com sucesso!");
+      form.reset();
+      const novo=await gerarIdMaquina();
+      idInput.value=novo.id;
+    }catch(err){
+      console.error(err);
+      showMessage("Erro ao salvar!","error");
+    }
   });
-}
 
-// Salvar alterações
-document.getElementById("saveBtn").onclick=async()=>{
-  const linhas=document.querySelectorAll("#tabela tbody tr");
-  for(const [i,tr] of linhas.entries()){
-    const id=manutencoes[i]?.id;
-    if(!id)continue;
-    const dados={};
-    tr.querySelectorAll("[data-field]").forEach(el=>{
-      dados[el.dataset.field]=el.tagName==="SELECT"?el.value:el.innerText.trim();
-    });
-    await db.collection("manutencoes").doc(id).update(dados);
+  // Consulta
+  let manutencoes=[];
+  async function carregarDados(){
+    const tbody=document.querySelector("#tabela tbody");
+    tbody.innerHTML="<tr><td colspan='9'>Carregando...</td></tr>";
+    const snap=await db.collection("manutencoes").orderBy("dataCadastro","desc").get();
+    manutencoes=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderTabela(manutencoes);
   }
-  showMessage("Alterações salvas!");
-  carregarDados();
-};
 
-// Pesquisa
-document.getElementById("search").addEventListener("input",()=>{
-  const termo=search.value.toLowerCase();
-  const filtradas=manutencoes.filter(m=>
-    (m.idMaquina?.toLowerCase().includes(termo)||
-     m.setor?.toLowerCase().includes(termo)||
-     m.tecnico?.toLowerCase().includes(termo))
-  );
-  renderTabela(filtradas);
+  function renderTabela(lista){
+    const tbody=document.querySelector("#tabela tbody");
+    if(lista.length===0){tbody.innerHTML="<tr><td colspan='9'>Nenhum registro encontrado.</td></tr>";return;}
+    tbody.innerHTML="";
+    lista.forEach(item=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+        <td>${item.idMaquina||""}</td>
+        <td contenteditable data-field="dataEntrada">${item.dataEntrada||""}</td>
+        <td contenteditable data-field="setor">${item.setor||""}</td>
+        <td contenteditable data-field="problema">${item.problema||""}</td>
+        <td contenteditable data-field="solucao">${item.solucao||""}</td>
+        <td>
+          <select data-field="status">
+            <option ${item.status==="Em manutenção"?"selected":""}>Em manutenção</option>
+            <option ${item.status==="Concluído"?"selected":""}>Concluído</option>
+          </select>
+        </td>
+        <td contenteditable data-field="dataSaida">${item.dataSaida||""}</td>
+        <td contenteditable data-field="tecnico">${item.tecnico||""}</td>
+        <td><button class="small excluirBtn" data-id="${item.id}">Excluir</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+    document.querySelectorAll(".excluirBtn").forEach(btn=>{
+      btn.onclick=async()=>{if(confirm("Excluir este registro?")){await db.collection("manutencoes").doc(btn.dataset.id).delete();showMessage("Registro excluído!");carregarDados();}}
+    });
+  }
+
+  document.getElementById("saveBtn").onclick=async()=>{
+    const linhas=document.querySelectorAll("#tabela tbody tr");
+    for(const [i,tr] of linhas.entries()){
+      const id=manutencoes[i]?.id;
+      if(!id)continue;
+      const dados={};
+      tr.querySelectorAll("[data-field]").forEach(el=>{
+        dados[el.dataset.field]=el.tagName==="SELECT"?el.value:el.innerText.trim();
+      });
+      await db.collection("manutencoes").doc(id).update(dados);
+    }
+    showMessage("Alterações salvas!");
+    carregarDados();
+  };
+
+  document.getElementById("search").addEventListener("input",()=>{
+    const termo=search.value.toLowerCase();
+    const filtradas=manutencoes.filter(m=>
+      (m.idMaquina?.toLowerCase().includes(termo)||
+       m.setor?.toLowerCase().includes(termo)||
+       m.tecnico?.toLowerCase().includes(termo))
+    );
+    renderTabela(filtradas);
+  });
+
+  document.getElementById("printBtn").onclick=()=>{
+    const win=window.open("","_blank");
+    win.document.write("<html><head><title>Relatório de Manutenções</title><style>table{width:100%;border-collapse:collapse;}th,td{border:1px solid #333;padding:8px;text-align:left;}</style></head><body>");
+    win.document.write("<h2>Relatório de Manutenções</h2>");
+    win.document.write(`<p>Total de registros: ${manutencoes.length}</p>`);
+    win.document.write(document.getElementById("tabela").outerHTML);
+    win.document.write("</body></html>");
+    win.document.close();
+    win.print();
+  };
 });
-
-// Impressão
-document.getElementById("printBtn").onclick=()=>{
-  const win=window.open("","_blank");
-  win.document.write("<html><head><title>Relatório de Manutenções</title><style>table{width:100%;border-collapse:collapse;}th,td{border:1px solid #333;padding:8px;text-align:left;}</style></head><body>");
-  win.document.write("<h2>Relatório de Manutenções</h2>");
-  win.document.write(`<p>Total de registros: ${manutencoes.length}</p>`);
-  win.document.write(document.getElementById("tabela").outerHTML);
-  win.document.write("</body></html>");
-  win.document.close();
-  win.print();
-};
 </script>
 </body>
 </html>
