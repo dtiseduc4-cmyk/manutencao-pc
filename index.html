@@ -6,12 +6,12 @@
 <title>Sistema de Manutenção de Computadores</title>
 <link rel="stylesheet" href="styles.css">
 
-<!-- Firebase (modo compatível com HTML direto) -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
 <script>
-  // 🔥 Configuração real do seu Firebase
+  // 🔥 Configuração Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyBWMeGoDass7ZZKbsN7ogX7ZKxTTApprtg",
     authDomain: "inventario-impressoras-2ecbd.firebaseapp.com",
@@ -47,6 +47,9 @@ th,td{padding:10px 8px; text-align:left; border-bottom:1px solid #f1f3f7; font-s
 footer{max-width:980px; margin:22px auto; color:var(--muted); font-size:13px; text-align:center}
 .toast{position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#0b63d6; color:#fff; padding:12px 18px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); animation:fadeInOut 3s ease forwards; z-index:9999}
 .toast.error{background:#e11d48}
+.status-tag{display:inline-block; padding:6px 10px; border-radius:8px; font-weight:600; color:#fff}
+.status-em{background:#e11d48} /* Vermelho */
+.status-ok{background:#16a34a} /* Verde */
 @keyframes fadeInOut{0%{opacity:0;transform:translate(-50%,30px)}10%,90%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,30px)}}
 @media(max-width:700px){.row{flex-direction:column}}
 </style>
@@ -170,7 +173,7 @@ function showMessage(msg,type="success"){
   setTimeout(()=>t.remove(),3000);
 }
 
-// Gerar ID automático
+// Gera ID automático
 async function gerarIdMaquina(){
   const hoje=new Date();
   const dataStr=hoje.toISOString().slice(0,10).replace(/-/g,"");
@@ -236,6 +239,7 @@ window.addEventListener("DOMContentLoaded", async ()=>{
     tbody.innerHTML="";
     lista.forEach(item=>{
       const tr=document.createElement("tr");
+      const statusClass=item.status==="Concluído"?"status-ok":"status-em";
       tr.innerHTML=`
         <td>${item.idMaquina||""}</td>
         <td contenteditable data-field="dataEntrada">${item.dataEntrada||""}</td>
@@ -243,9 +247,9 @@ window.addEventListener("DOMContentLoaded", async ()=>{
         <td contenteditable data-field="problema">${item.problema||""}</td>
         <td contenteditable data-field="solucao">${item.solucao||""}</td>
         <td>
-          <select data-field="status">
-            <option ${item.status==="Em manutenção"?"selected":""}>Em manutenção</option>
-            <option ${item.status==="Concluído"?"selected":""}>Concluído</option>
+          <select data-field="status" class="${statusClass}">
+            <option value="Em manutenção" ${item.status==="Em manutenção"?"selected":""}>Em manutenção</option>
+            <option value="Concluído" ${item.status==="Concluído"?"selected":""}>Concluído</option>
           </select>
         </td>
         <td contenteditable data-field="dataSaida">${item.dataSaida||""}</td>
@@ -253,7 +257,13 @@ window.addEventListener("DOMContentLoaded", async ()=>{
         <td><button class="small excluirBtn" data-id="${item.id}">Excluir</button></td>
       `;
       tbody.appendChild(tr);
+
+      // muda cor ao alterar status
+      const select=tr.querySelector("select[data-field='status']");
+      select.onchange=()=>{select.className=select.value==="Concluído"?"status-ok":"status-em";}
+      select.className=select.value==="Concluído"?"status-ok":"status-em";
     });
+
     document.querySelectorAll(".excluirBtn").forEach(btn=>{
       btn.onclick=async()=>{if(confirm("Excluir este registro?")){await db.collection("manutencoes").doc(btn.dataset.id).delete();showMessage("Registro excluído!");carregarDados();}}
     });
@@ -286,9 +296,11 @@ window.addEventListener("DOMContentLoaded", async ()=>{
 
   document.getElementById("printBtn").onclick=()=>{
     const win=window.open("","_blank");
+    const em=manutencoes.filter(m=>m.status==="Em manutenção").length;
+    const ok=manutencoes.filter(m=>m.status==="Concluído").length;
     win.document.write("<html><head><title>Relatório de Manutenções</title><style>table{width:100%;border-collapse:collapse;}th,td{border:1px solid #333;padding:8px;text-align:left;}</style></head><body>");
     win.document.write("<h2>Relatório de Manutenções</h2>");
-    win.document.write(`<p>Total de registros: ${manutencoes.length}</p>`);
+    win.document.write(`<p>Total: ${manutencoes.length} | Em manutenção: ${em} | Concluídas: ${ok}</p>`);
     win.document.write(document.getElementById("tabela").outerHTML);
     win.document.write("</body></html>");
     win.document.close();
