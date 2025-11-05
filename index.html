@@ -62,6 +62,13 @@ footer{max-width:980px; margin:22px auto; color:var(--muted); font-size:13px; te
 
 .status-em { background: #e11d48; }  /* Vermelho */
 .status-ok { background: #16a34a; }  /* Verde */
+  /* Aumenta a largura da coluna de status */
+#tabela th:nth-child(6),
+#tabela td:nth-child(6) {
+  width: 180px;      /* 🔹 Ajuste conforme quiser (ex: 160–220px) */
+  text-align: center;
+}
+
 
 @keyframes fadeInOut{0%{opacity:0;transform:translate(-50%,30px)}10%,90%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,30px)}}
 @media(max-width:700px){.row{flex-direction:column}}
@@ -336,6 +343,7 @@ select.className = (select.value === "Concluído" || select.value === "Concluíd
 </script>
 </body>
 </html>
+
 
 
 
