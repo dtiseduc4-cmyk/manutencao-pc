@@ -48,8 +48,21 @@ footer{max-width:980px; margin:22px auto; color:var(--muted); font-size:13px; te
 .toast{position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#0b63d6; color:#fff; padding:12px 18px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); animation:fadeInOut 3s ease forwards; z-index:9999}
 .toast.error{background:#e11d48}
 .status-tag{display:inline-block; padding:6px 10px; border-radius:8px; font-weight:600; color:#fff}
-.status-em{background:#e11d48} /* Vermelho */
-.status-ok{background:#16a34a} /* Verde */
+/* Estilo dos status com mais destaque e espaçamento */
+.status-em,
+.status-ok {
+  display: inline-block;
+  padding: 8px 14px;            /* 🔹 Mais espaçamento interno */
+  border-radius: 8px;
+  font-weight: 600;
+  color: #fff;
+  transition: all 0.25s ease;   /* 🔹 Transição suave ao mudar */
+  margin: 2px 4px;              /* 🔹 Pequeno espaçamento externo */
+}
+
+.status-em { background: #e11d48; }  /* Vermelho */
+.status-ok { background: #16a34a; }  /* Verde */
+
 @keyframes fadeInOut{0%{opacity:0;transform:translate(-50%,30px)}10%,90%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,30px)}}
 @media(max-width:700px){.row{flex-direction:column}}
 </style>
@@ -323,5 +336,6 @@ select.className = (select.value === "Concluído" || select.value === "Concluíd
 </script>
 </body>
 </html>
+
 
 
