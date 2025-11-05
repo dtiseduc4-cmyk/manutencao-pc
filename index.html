@@ -93,6 +93,7 @@ footer{max-width:980px; margin:22px auto; color:var(--muted); font-size:13px; te
           <select id="status">
             <option value="Em manutenção">Em manutenção</option>
             <option value="Concluído">Concluído</option>
+            <option value="Concluído, ainda na SEDUC">Concluído, ainda na SEDUC</option>
           </select>
         </div>
       </div>
@@ -250,6 +251,7 @@ window.addEventListener("DOMContentLoaded", async ()=>{
           <select data-field="status" class="${statusClass}">
             <option value="Em manutenção" ${item.status==="Em manutenção"?"selected":""}>Em manutenção</option>
             <option value="Concluído" ${item.status==="Concluído"?"selected":""}>Concluído</option>
+             <option value="Concluído, ainda na SEDUC" ${item.status==="Concluído, ainda na SEDUC"?"selected":""}>Concluído, ainda na SEDUC</option>
           </select>
         </td>
         <td contenteditable data-field="dataSaida">${item.dataSaida||""}</td>
@@ -258,10 +260,21 @@ window.addEventListener("DOMContentLoaded", async ()=>{
       `;
       tbody.appendChild(tr);
 
-      // muda cor ao alterar status
-      const select=tr.querySelector("select[data-field='status']");
-      select.onchange=()=>{select.className=select.value==="Concluído"?"status-ok":"status-em";}
-      select.className=select.value==="Concluído"?"status-ok":"status-em";
+     // muda cor ao alterar status
+const select = tr.querySelector("select[data-field='status']");
+
+select.onchange = () => {
+  select.className = (select.value === "Concluído" || select.value === "Concluído, ainda na SEDUC")
+    ? "status-ok"
+    : "status-em";
+};
+
+// aplica cor inicial ao carregar
+select.className = (select.value === "Concluído" || select.value === "Concluído, ainda na SEDUC")
+  ? "status-ok"
+  : "status-em";
+
+      
     });
 
     document.querySelectorAll(".excluirBtn").forEach(btn=>{
@@ -310,4 +323,5 @@ window.addEventListener("DOMContentLoaded", async ()=>{
 </script>
 </body>
 </html>
+
 
