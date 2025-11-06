@@ -284,13 +284,14 @@ window.addEventListener("DOMContentLoaded", async ()=>{
 const select = tr.querySelector("select[data-field='status']");
 
 select.onchange = () => {
-  select.className = (select.value === "Concluído" || select.value === "Concluído, ainda na SEDUC")
-    ? "status-ok"
-    : "status-em";
+  select.className = (select.value === "Concluído")
+  ? "status-ok"
+  : "status-em";
+
 };
 
 // aplica cor inicial ao carregar
-select.className = (select.value === "Concluído" || select.value === "Concluído, ainda na SEDUC")
+select.className = (select.value === "Concluído")
   ? "status-ok"
   : "status-em";
 
@@ -343,6 +344,7 @@ select.className = (select.value === "Concluído" || select.value === "Concluíd
 </script>
 </body>
 </html>
+
 
 
 
