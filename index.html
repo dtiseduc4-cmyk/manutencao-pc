@@ -114,6 +114,7 @@ footer{max-width:980px; margin:22px auto; color:var(--muted); font-size:13px; te
             <option value="Em manutenção">Em manutenção</option>
             <option value="Concluído">Concluído</option>
             <option value="Concluído, ainda na SEDUC">Concluído, ainda na SEDUC</option>
+             <option value="Reserva">Reserva</option>
           </select>
         </div>
       </div>
@@ -214,8 +215,17 @@ window.addEventListener("DOMContentLoaded", async ()=>{
   idInput.value=novo.id;
 
   // Alternar menus
-  document.getElementById("menuCadastro").onclick=async()=>{paginaCadastro.style.display="block";paginaConsulta.style.display="none";const n=await gerarIdMaquina();idInput.value=n.id;}
-  document.getElementById("menuConsulta").onclick=()=>{paginaCadastro.style.display="none";paginaConsulta.style.display="block";carregarDados();}
+  document.getElementById("menuCadastro").onclick=async()=>{
+    paginaCadastro.style.display="block";
+    paginaConsulta.style.display="none";
+    const n=await gerarIdMaquina();
+    idInput.value=n.id;
+  };
+  document.getElementById("menuConsulta").onclick=()=>{
+    paginaCadastro.style.display="none";
+    paginaConsulta.style.display="block";
+    carregarDados();
+  };
 
   // Salvar manutenção
   form.addEventListener("submit",async e=>{
@@ -271,7 +281,8 @@ window.addEventListener("DOMContentLoaded", async ()=>{
           <select data-field="status" class="${statusClass}">
             <option value="Em manutenção" ${item.status==="Em manutenção"?"selected":""}>Em manutenção</option>
             <option value="Concluído" ${item.status==="Concluído"?"selected":""}>Concluído</option>
-             <option value="Concluído, ainda na SEDUC" ${item.status==="Concluído, ainda na SEDUC"?"selected":""}>Concluído, ainda na SEDUC</option>
+            <option value="Concluído, ainda na SEDUC" ${item.status==="Concluído, ainda na SEDUC"?"selected":""}>Concluído, ainda na SEDUC</option>
+            <option value="Reserva" ${item.status==="Reserva"?"selected":""}>Reserva</option>
           </select>
         </td>
         <td contenteditable data-field="dataSaida">${item.dataSaida||""}</td>
@@ -280,29 +291,27 @@ window.addEventListener("DOMContentLoaded", async ()=>{
       `;
       tbody.appendChild(tr);
 
-     // muda cor ao alterar status
-const select = tr.querySelector("select[data-field='status']");
-
-select.onchange = () => {
-  select.className = (select.value === "Concluído")
-  ? "status-ok"
-  : "status-em";
-
-};
-
-// aplica cor inicial ao carregar
-select.className = (select.value === "Concluído")
-  ? "status-ok"
-  : "status-em";
-
-      
+      // muda cor ao alterar status
+      const select = tr.querySelector("select[data-field='status']");
+      select.onchange = () => {
+        select.className = (select.value === "Concluído") ? "status-ok" : "status-em";
+      };
+      select.className = (select.value === "Concluído") ? "status-ok" : "status-em";
     });
 
+    // Botão excluir
     document.querySelectorAll(".excluirBtn").forEach(btn=>{
-      btn.onclick=async()=>{if(confirm("Excluir este registro?")){await db.collection("manutencoes").doc(btn.dataset.id).delete();showMessage("Registro excluído!");carregarDados();}}
+      btn.onclick=async()=>{
+        if(confirm("Excluir este registro?")){
+          await db.collection("manutencoes").doc(btn.dataset.id).delete();
+          showMessage("Registro excluído!");
+          carregarDados();
+        }
+      };
     });
   }
 
+  // Botão salvar alterações
   document.getElementById("saveBtn").onclick=async()=>{
     const linhas=document.querySelectorAll("#tabela tbody tr");
     for(const [i,tr] of linhas.entries()){
@@ -318,23 +327,32 @@ select.className = (select.value === "Concluído")
     carregarDados();
   };
 
+  // Campo de busca (por texto ou mês)
   document.getElementById("search").addEventListener("input",()=>{
     const termo=search.value.toLowerCase();
-    const filtradas=manutencoes.filter(m=>
-      (m.idMaquina?.toLowerCase().includes(termo)||
-       m.setor?.toLowerCase().includes(termo)||
-       m.tecnico?.toLowerCase().includes(termo))
-    );
+    const filtradas=manutencoes.filter(m=>{
+      const mesEntrada = m.dataEntrada?.slice(0,7); // yyyy-MM
+      const mesSaida = m.dataSaida?.slice(0,7);
+      return (
+        m.idMaquina?.toLowerCase().includes(termo) ||
+        m.setor?.toLowerCase().includes(termo) ||
+        m.tecnico?.toLowerCase().includes(termo) ||
+        mesEntrada === termo ||
+        mesSaida === termo
+      );
+    });
     renderTabela(filtradas);
   });
 
+  // Imprimir relatório
   document.getElementById("printBtn").onclick=()=>{
     const win=window.open("","_blank");
     const em=manutencoes.filter(m=>m.status==="Em manutenção").length;
     const ok=manutencoes.filter(m=>m.status==="Concluído").length;
+    const reserva=manutencoes.filter(m=>m.status==="Reserva").length;
     win.document.write("<html><head><title>Relatório de Manutenções</title><style>table{width:100%;border-collapse:collapse;}th,td{border:1px solid #333;padding:8px;text-align:left;}</style></head><body>");
     win.document.write("<h2>Relatório de Manutenções</h2>");
-    win.document.write(`<p>Total: ${manutencoes.length} | Em manutenção: ${em} | Concluídas: ${ok}</p>`);
+    win.document.write(`<p>Total: ${manutencoes.length} | Em manutenção: ${em} | Concluídas: ${ok} | Reserva: ${reserva}</p>`);
     win.document.write(document.getElementById("tabela").outerHTML);
     win.document.write("</body></html>");
     win.document.close();
@@ -342,8 +360,10 @@ select.className = (select.value === "Concluído")
   };
 });
 </script>
+
 </body>
 </html>
+
 
 
 
