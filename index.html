@@ -156,10 +156,12 @@ footer{max-width:980px; margin:22px auto; color:var(--muted); font-size:13px; te
         <div class="muted">Edite diretamente na tabela e clique em "Salvar alterações".</div>
       </div>
       <div class="controls">
-        <input id="search" class="search" placeholder="Pesquisar por ID, setor ou técnico">
-        <button id="saveBtn" class="small">Salvar alterações</button>
-        <button id="printBtn" class="small">Imprimir relatório</button>
-      </div>
+  <input id="search" class="search" placeholder="Pesquisar por ID, setor ou técnico">
+  <input type="month" id="mesFiltro" class="search" title="Filtrar por mês">
+  <button id="saveBtn" class="small">Salvar alterações</button>
+  <button id="printBtn" class="small">Imprimir relatório</button>
+</div>
+
     </div>
 
     <div style="overflow:auto">
@@ -328,21 +330,33 @@ window.addEventListener("DOMContentLoaded", async ()=>{
   };
 
   // Campo de busca (por texto ou mês)
-  document.getElementById("search").addEventListener("input",()=>{
-    const termo=search.value.toLowerCase();
-    const filtradas=manutencoes.filter(m=>{
-      const mesEntrada = m.dataEntrada?.slice(0,7); // yyyy-MM
-      const mesSaida = m.dataSaida?.slice(0,7);
-      return (
-        m.idMaquina?.toLowerCase().includes(termo) ||
-        m.setor?.toLowerCase().includes(termo) ||
-        m.tecnico?.toLowerCase().includes(termo) ||
-        mesEntrada === termo ||
-        mesSaida === termo
-      );
-    });
-    renderTabela(filtradas);
+ // 🔍 Filtro por texto (ID, setor, técnico)
+const campoBusca = document.getElementById("search");
+const campoMes = document.getElementById("mesFiltro");
+
+function aplicarFiltros() {
+  const termo = campoBusca.value.toLowerCase();
+  const mesSelecionado = campoMes.value; // formato yyyy-MM
+
+  const filtradas = manutencoes.filter(m => {
+    const mesEntrada = m.dataEntrada?.slice(0,7);
+    const mesSaida = m.dataSaida?.slice(0,7);
+    const correspondeTexto =
+      m.idMaquina?.toLowerCase().includes(termo) ||
+      m.setor?.toLowerCase().includes(termo) ||
+      m.tecnico?.toLowerCase().includes(termo);
+    const correspondeMes =
+      !mesSelecionado || mesEntrada === mesSelecionado || mesSaida === mesSelecionado;
+
+    return correspondeTexto && correspondeMes;
   });
+
+  renderTabela(filtradas);
+}
+
+campoBusca.addEventListener("input", aplicarFiltros);
+campoMes.addEventListener("change", aplicarFiltros);
+
 
   // Imprimir relatório
   document.getElementById("printBtn").onclick=()=>{
@@ -363,6 +377,7 @@ window.addEventListener("DOMContentLoaded", async ()=>{
 
 </body>
 </html>
+
 
 
 
